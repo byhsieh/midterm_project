@@ -98,7 +98,7 @@ for data in note1:
   s.write(bytes(formatter(data) ,'UTF-8'))
   time.sleep(waitTime)
 #s.write(bytes("ffffff",'UTF-8'))
-s.close()
+#s.close()
 #print("Signal sended")
 
 s.write(bytes("#",'UTF-8'))
@@ -120,7 +120,7 @@ for data in note2:
   s.write(bytes(formatter(data) ,'UTF-8'))
   time.sleep(waitTime)
 #s.write(bytes("ffffff",'UTF-8'))
-s.close()
+#s.close()
 #print("Signal sended")
 
 s.write(bytes("#",'UTF-8'))
@@ -135,14 +135,14 @@ time.sleep(waitTime)
 s.write(bytes("$",'UTF-8'))
 
 
-for data in song4:
+for data in song3:
   s.write(bytes(formatter(data) ,'UTF-8'))
   time.sleep(waitTime)
-for data in note4:
+for data in note3:
   s.write(bytes(formatter(data) ,'UTF-8'))
   time.sleep(waitTime)
 #s.write(bytes("ffffff",'UTF-8'))
-s.close()
+#s.close()
 #print("Signal sended")
 
 s.write(bytes("#",'UTF-8'))
@@ -157,14 +157,14 @@ time.sleep(waitTime)
 s.write(bytes("$",'UTF-8'))
 
 
-for data in song5:
+for data in song4:
   s.write(bytes(formatter(data) ,'UTF-8'))
   time.sleep(waitTime)
-for data in note5:
+for data in note4:
   s.write(bytes(formatter(data) ,'UTF-8'))
   time.sleep(waitTime)
 #s.write(bytes("ffffff",'UTF-8'))
-s.close()
+#s.close()
 #print("Signal sended")
 
 s.write(bytes("#",'UTF-8'))

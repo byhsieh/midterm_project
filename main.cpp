@@ -5,6 +5,7 @@
 #include "uLCD_4DGL.h"
 #include "DA7212.h"
 #include <cmath>
+#include <iostream>
 
 #include "tensorflow/lite/c/common.h"
 #include "tensorflow/lite/micro/kernels/micro_ops.h"
@@ -18,7 +19,9 @@
 #define bufferLength (32)
 #define signalLength (416)
 
-uLCD_4DGL uLCD(D1, D0, D2);
+using namespace std;
+
+
 DA7212 audio;
 Serial pc(USBTX, USBRX);
 
@@ -29,13 +32,17 @@ DigitalOut redled(LED1);
 DigitalOut greenled(LED2);
 DigitalOut blueled(LED3);
 
+uLCD_4DGL uLCD(D1, D0, D2);
 
+Thread t;
+Thread t0;
 Thread t1;
 Thread t2;
 Thread t3;
 Thread t4;
 
-
+EventQueue queue(32 * EVENTS_EVENT_SIZE);
+EventQueue queue0(32 * EVENTS_EVENT_SIZE);
 EventQueue queue1(32 * EVENTS_EVENT_SIZE);
 EventQueue queue2(32 * EVENTS_EVENT_SIZE);
 EventQueue queue3(32 * EVENTS_EVENT_SIZE);
@@ -65,9 +72,9 @@ int idC;
 int irq=0;
 int resetmusicplay=0;
 int f=1;
-int taikochoose=0;
+int finish;
 
-int song[signalLength];
+float song[signalLength];
 char serialInBuffer[bufferLength];
 int serialCount = 0;
 
@@ -199,10 +206,44 @@ void song_list(){
 
 }
 
+void songsplit(){
+
+  int song1[84], song2[98], song3[94], song4[64], song5[76];
+  int j;
+  
+  while (finish){
+    for(j=0; j<84; j++){
+     song1[j] = (int) song[j]*1000.0;
+    }
+ 
+    for(j=84; j<182; j++){
+     song2[j-84] = (int) song[j]*1000.0;
+    }
+ 
+    for(j=182; j<276; j++){
+     song3[j-182] = (int) song[j]*1000.0;
+    }
+ 
+    for(j=276; j<340; j++){
+     song4[j-276] = (int) song[j]*1000.0;
+    }
+ 
+    for(j=340; j<416; j++){
+     song5[j-340] = (int) song[j]*1000.0;
+    }
+ 
+    songlist[0].loadinfo(song1);
+    songlist[1].loadinfo(song2);
+    songlist[2].loadinfo(song3);
+    songlist[3].loadinfo(song4);
+    songlist[4].loadinfo(song5);
+  }
+  
+}
+
 void loadsong()
 {
-  blueled = 0;
-  greenled = 1;
+  
   int i = 0;
   serialCount = 0;
   audio.spk.pause();
@@ -215,84 +256,37 @@ void loadsong()
       if(serialCount == 5)
       {
         serialInBuffer[serialCount] = '\0';
-        song[i] = atoi(serialInBuffer);
+        song[i] = (float) atof(serialInBuffer);
         serialCount = 0;
         i++;
       }
     }
   }
-  blueled = 1;
-  greenled = 0;
-
-  int song1[84], song2[98], song3[94], song4[64], song5[76];
-  int j;
   
-  for(j=0; j<84; j++){
-     song1[j] = song[j];
-  }
- 
-  for(j=84; j<182; j++){
-     song2[j-84] = song[j];
-  }
- 
-  for(j=182; j<276; j++){
-     song3[j-182] = song[j];
-  }
- 
-  for(j=276; j<340; j++){
-     song4[j-276] = song[j];
-  }
- 
-  for(j=340; j<416; j++){
-     song5[j-340] = song[j];
-  }
- 
-  songlist[0].loadinfo(song1);
-  songlist[1].loadinfo(song2);
-  songlist[2].loadinfo(song3);
-  songlist[3].loadinfo(song4);
-  songlist[4].loadinfo(song5);
-
-  string songname[5] = {"little star", "little bee", "jingle bell", "two tigers", "train fly fast"};
-  int songlength[5] = {42, 49, 47, 32, 38};
-  int songspeed[5] = {1, 1, 1, 2, 1};
- 
-  songlist[0].name=songname[0];
-  songlist[0].length=songlength[0];
-  songlist[0].speed=songspeed[0];
- 
-  songlist[1].name=songname[1];
-  songlist[1].length=songlength[1];
-  songlist[1].speed=songspeed[1];
- 
-  songlist[2].name=songname[2];
-  songlist[2].length=songlength[2];
-  songlist[2].speed=songspeed[2];
- 
-  songlist[3].name=songname[3];
-  songlist[3].length=songlength[3];
-  songlist[3].speed=songspeed[3];
- 
-  songlist[4].name=songname[4];
-  songlist[4].length=songlength[4];
-  songlist[4].speed=songspeed[4];
-
+  songsplit();
 }
 
+
 void loadsonghandler(){
-  queue1.call(loadsong);
+  queue0.call(loadsong);
 }
 
 void mode_selection(){
- 
-  if(timers.read_ms()>1000){
+
+  int onetime = 0;
+
+  while(onetime<1){
+    onetime++;
+    loadsong(); 
+  }
+
+    if(timers.read_ms()>1000){
     queue2.cancel(player);
-    taikochoose=0;
     f=0;
     resetmusicplay=1;
     playNote(0);
-    greenled=1;
-    redled=0;
+    //greenled=1;
+    //redled=0;
     wait_us(500);
     uLCD.cls();
     uLCD.color(GREEN);
@@ -327,8 +321,8 @@ void mode_selection(){
     }
     //uLCD.printf("a: %d",a);
     timers.reset();
-  }
-
+    }
+  
   f=1;
 }
 
@@ -379,8 +373,6 @@ void playmusic(int reset){
     }
   }
  
-  redled=1;
-  greenled=0;
 }
 
 
@@ -552,14 +544,26 @@ int main(int argc, char* argv[]) {
   uLCD.printf("** User Manual **\n\n");
   uLCD.printf(" Press SW2 to\n enter MODE SEL\n and following\n the instructions.\n");
   
+  t.start(callback(&queue, &EventQueue::dispatch_forever));
+  t0.start(callback(&queue0, &EventQueue::dispatch_forever));
   t1.start(callback(&queue1, &EventQueue::dispatch_forever));
   t2.start(callback(&queue2, &EventQueue::dispatch_forever));
   t3.start(callback(&queue3, &EventQueue::dispatch_forever));
   t4.start(callback(&queue4, &EventQueue::dispatch_forever));
   timers.start();
-  button.rise(queue1.event(loadsonghandler));
-  button.fall(queue1.event(mode_selection));
+  //button.rise(queue1.event(loadsonghandler));
+  button.rise(queue1.event(mode_selection));
 
+  string songname[5] = {"little star", "little bee", "jingle bell", "two tigers", "train fly fast"};
+  int songlength[5] = {42, 49, 47, 32, 38};
+  int songspeed[5] = {1, 1, 1, 2, 1};
+  
+  for(int k=0; k<5; k++){
+    songlist[k].name=songname[k];
+    songlist[k].length=songlength[k];
+    songlist[k].speed=songspeed[k];
+  }
+ 
   nextsong=0;
   
   if (model->version() != TFLITE_SCHEMA_VERSION) {

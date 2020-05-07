@@ -13,34 +13,45 @@
 #include "tensorflow/lite/version.h"
 #include "uLCD_4DGL.h"
 
+#define bufferLength (32)
+#define signalLength (417)
 
+uLCD_4DGL uLCD(D1, D0, D2);
 DA7212 audio;
 Serial pc(USBTX, USBRX);
+
 InterruptIn button(SW2);
 DigitalIn confirmbutton(SW3);
+
 DigitalOut redled(LED1); 
 DigitalOut greenled(LED2);
+DigitalOut blueled(LED3);
+
+Thread t;
+Thread t0;
 Thread t1;
-uLCD_4DGL uLCD(D1, D0, D2);
 Thread t2;
 Thread t3;
 Thread t4;
 
-Timer timers;
-Timer timer2;
-Timer timer3;
-int interruptcall=0;
-
-int PredictGesture(float* output);
+EventQueue queue(32 * EVENTS_EVENT_SIZE);
+EventQueue queue0(32 * EVENTS_EVENT_SIZE);
 EventQueue queue1(32 * EVENTS_EVENT_SIZE);
 EventQueue queue2(32 * EVENTS_EVENT_SIZE);
 EventQueue queue3(32 * EVENTS_EVENT_SIZE);
 EventQueue queue4(32 * EVENTS_EVENT_SIZE);
+
+Timer timers;
+Timer timer2;
+Timer timer3;
+
+int PredictGesture(float* output);
 int gesture_result();
+
 constexpr int kTensorArenaSize = 60 * 1024;
 uint8_t tensor_arena[kTensorArenaSize];
 
-
+int interruptcall=0;
 int player;
 int endplaying=0;
 int nowplaying=0;
@@ -184,9 +195,101 @@ void song_list(){
 
 }
 
+int song[signalLength];
+
+void loadsong(void)
+{
+  blueled = 0;
+  int i = 0;
+  char serialInBuffer[bufferLength];
+  int serialCount = 0;
+  audio.spk.pause();
+  while(i < signalLength)
+  {
+    if(pc.readable())
+    {
+      serialInBuffer[serialCount] = pc.getc();
+      serialCount++;
+      if(serialCount == 5)
+      {
+        serialInBuffer[serialCount] = '\0';
+        song[i] = (int) atof(serialInBuffer);
+        serialCount = 0;
+        i++;
+      }
+    }
+  }
+  blueled = 1;
+}
+
+void songspilt(void){
+  
+  int song1[84], song2[98], song3[95], song4[64], song5[76];
+  int j;
+  
+  for(j=0; j<84; j++){
+     song1[j] = song[j];
+  }
+ 
+  for(j=84; j<182; j++){
+     song2[j] = song[j];
+  }
+ 
+  for(j=182; j<277; j++){
+     song3[j] = song[j];
+  }
+ 
+  for(j=277; j<341; j++){
+     song4[j] = song[j];
+  }
+ 
+  for(j=341; j<417; j++){
+     song5[j] = song[j];
+  }
+ 
+  songlist[0].loadinfo(song1);
+  songlist[1].loadinfo(song2);
+  songlist[2].loadinfo(song3);
+  songlist[3].loadinfo(song4);
+  songlist[4].loadinfo(song5);
+ 
+}
+
+void songinfo(void){
+ 
+  string songname[5] = {"little star", "little bee", "jingle bell", "two tigers", "train fly fast"};
+  int songlength[5] = {42, 49, 47, 32, 38};
+  int songspeed[5] = {1, 1, 1, 2, 1};
+ 
+  songlist[0].name=songname[0];
+  songlist[0].length=songlength[0];
+  songlist[0].speed=songspeed[0];
+ 
+  songlist[1].name=songname[1];
+  songlist[1].length=songlength[1];
+  songlist[1].speed=songspeed[1];
+ 
+  songlist[2].name=songname[2];
+  songlist[2].length=songlength[2];
+  songlist[2].speed=songspeed[2];
+ 
+  songlist[3].name=songname[3];
+  songlist[3].length=songlength[3];
+  songlist[3].speed=songspeed[3];
+ 
+  songlist[4].name=songname[4];
+  songlist[4].length=songlength[4];
+  songlist[4].speed=songspeed[4];
+ 
+}
+
 void mode_selection(){
+ 
+  queue.call(loadsong);
+  queue0.call(songspilt);
+  queue1.call(songinfo);
+ 
   if(timers.read_ms()>1000){
-    //queue3.cancel(idC);
     queue2.cancel(player);
     taikochoose=0;
     f=0;
@@ -441,6 +544,8 @@ int gesture_result(){
     return getanswer;
 }
 
+
+
 int main(int argc, char* argv[]) {
 
   uLCD.cls();
@@ -448,7 +553,9 @@ int main(int argc, char* argv[]) {
   uLCD.locate(0,5);
   uLCD.printf("** User Manual **\n\n");
   uLCD.printf(" Press SW2 to\n enter MODE SEL\n and following\n the instructions.\n");
-
+  
+  t.start(callback(&queue, &EventQueue::dispatch_forever));
+  t0.start(callback(&queue0, &EventQueue::dispatch_forever));
   t1.start(callback(&queue1, &EventQueue::dispatch_forever));
   t2.start(callback(&queue2, &EventQueue::dispatch_forever));
   t3.start(callback(&queue3, &EventQueue::dispatch_forever));
@@ -456,13 +563,9 @@ int main(int argc, char* argv[]) {
   timers.start();
   button.rise(queue1.event(mode_selection));
 
-  songlist[0].name="little star";
-  songlist[1].name="little bee";
-  songlist[2].name="jingle bells";
-  songlist[3].name="two tigers";
-  songlist[4].name="train run";
+  
 
-  int song1[84]={261, 261, 392, 392, 440, 440, 392,
+  /*int song1[84]={261, 261, 392, 392, 440, 440, 392,
                 349, 349, 330, 330, 294, 294, 261,
                 392, 392, 349, 349, 330, 330, 294,
                 392, 392, 349, 349, 330, 330, 294,
@@ -473,12 +576,10 @@ int main(int argc, char* argv[]) {
                 1, 1, 1, 1, 1, 1, 2,
                 1, 1, 1, 1, 1, 1, 2,
                 1, 1, 1, 1, 1, 1, 2,
-                1, 1, 1, 1, 1, 1, 2};
-  songlist[0].length=42;
-  songlist[0].loadinfo(song1);
-  songlist[0].speed=1;
+                1, 1, 1, 1, 1, 1, 2};*/
   
-  int song2[98]={
+  
+  /*int song2[98]={
     392,330,330,349,
     294,294,261,294,330,349,392,392,392,392,330,330,349,
     294,294,261,330,392,392,330,294,294,294,294,294,330,349,330,
@@ -487,12 +588,10 @@ int main(int argc, char* argv[]) {
     1,1,2,1,1,2,1,1,1,1,4,
     1,1,1,1,1,1,2,1,1,1,1,1,1,2,
     1,1,2,1,1,2,1,1,1,1,4
-  };
-  songlist[1].length=49;
-  songlist[1].loadinfo(song2);
-  songlist[1].speed=1;
+  };*/
+  
 
-  int song3[95]={
+  /*int song3[95]={
     330,330,330,330,330,330,330,392,261,294,
     330,349,349,349,349,349,330,330,330,294,294,330,294,
     392,330,330,330,330,330,330,330,392,261,294,330,349,349,349,
@@ -501,33 +600,27 @@ int main(int argc, char* argv[]) {
     1,1,2,1,1,1,1,1,1,1,1,2,2,
     1,1,2,1,1,2,1,1,1,1,4,
     1,1,2,1,1,1,1,1,1,1,1,2,2
-  };
-  songlist[2].length=47;
-  songlist[2].loadinfo(song3);
-  songlist[2].speed=1;
+  };*/
+  
 
-  int song4[64]={
+  /*int song4[64]={
     261,294,330,261,261,294,330,261,330,349,392,330,349,392,392,440,392,349,330,261,392,440,392,349,330,261,261,196,261,261,196,261,
     2,2,2,2,2,2,2,2,
     2,2,4,2,2,4,
     1,1,1,1,2,2,1,1,1,1,2,2,
     2,2,4,2,2,4
-  };
-  songlist[3].length=32;
-  songlist[3].loadinfo(song4);
-  songlist[3].speed=2;
+  };*/
+  
 
-  int song5[76]={
+  /*int song5[76]={
     392,392,330,261,392,392,330,261,294,330,349,349,330,349,349,392,392,330,392,330,294,330,261,349,294,294,294,330,261,261,261,294,330,349,294,261,247,261,
     1,1,1,1,1,1,1,1,
     1,1,1,1,1,1,1,1,
     1,1,1,1,1,1,2,
     1,1,1,1,1,1,1,1,
     1,1,1,1,1,1,2
-  };
-  songlist[4].length=38;
-  songlist[4].loadinfo(song5);
-  songlist[4].speed=1;
+  };*/
+  
 
   nextsong=0;
   // wait(1);

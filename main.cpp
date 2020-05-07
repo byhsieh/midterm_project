@@ -2,7 +2,9 @@
 #include "config.h"
 #include "magic_wand_model_data.h"
 #include "mbed.h"
+#include "uLCD_4DGL.h"
 #include "DA7212.h"
+#include <cmath>
 
 #include "tensorflow/lite/c/common.h"
 #include "tensorflow/lite/micro/kernels/micro_ops.h"
@@ -11,7 +13,7 @@
 #include "tensorflow/lite/micro/micro_mutable_op_resolver.h"
 #include "tensorflow/lite/schema/schema_generated.h"
 #include "tensorflow/lite/version.h"
-#include "uLCD_4DGL.h"
+
 
 #define bufferLength (32)
 #define signalLength (416)
@@ -27,15 +29,13 @@ DigitalOut redled(LED1);
 DigitalOut greenled(LED2);
 DigitalOut blueled(LED3);
 
-Thread t;
-Thread t0;
+
 Thread t1;
 Thread t2;
 Thread t3;
 Thread t4;
 
-EventQueue queue(32 * EVENTS_EVENT_SIZE);
-EventQueue queue0(32 * EVENTS_EVENT_SIZE);
+
 EventQueue queue1(32 * EVENTS_EVENT_SIZE);
 EventQueue queue2(32 * EVENTS_EVENT_SIZE);
 EventQueue queue3(32 * EVENTS_EVENT_SIZE);
@@ -66,6 +66,10 @@ int irq=0;
 int resetmusicplay=0;
 int f=1;
 int taikochoose=0;
+
+int song[signalLength];
+char serialInBuffer[bufferLength];
+int serialCount = 0;
 
 int16_t waveform[kAudioTxBufferSize];
 void playmusic(int);
@@ -195,14 +199,12 @@ void song_list(){
 
 }
 
-int song[signalLength];
-
-void loadsong(void)
+void loadsong()
 {
   blueled = 0;
+  greenled = 1;
   int i = 0;
-  char serialInBuffer[bufferLength];
-  int serialCount = 0;
+  serialCount = 0;
   audio.spk.pause();
   while(i < signalLength)
   {
@@ -213,17 +215,15 @@ void loadsong(void)
       if(serialCount == 5)
       {
         serialInBuffer[serialCount] = '\0';
-        song[i] = (int) atof(serialInBuffer);
+        song[i] = atoi(serialInBuffer);
         serialCount = 0;
         i++;
       }
     }
   }
   blueled = 1;
-}
+  greenled = 0;
 
-void songspilt(void){
-  
   int song1[84], song2[98], song3[94], song4[64], song5[76];
   int j;
   
@@ -232,19 +232,19 @@ void songspilt(void){
   }
  
   for(j=84; j<182; j++){
-     song2[j] = song[j];
+     song2[j-84] = song[j];
   }
  
   for(j=182; j<276; j++){
-     song3[j] = song[j];
+     song3[j-182] = song[j];
   }
  
   for(j=276; j<340; j++){
-     song4[j] = song[j];
+     song4[j-276] = song[j];
   }
  
   for(j=340; j<416; j++){
-     song5[j] = song[j];
+     song5[j-340] = song[j];
   }
  
   songlist[0].loadinfo(song1);
@@ -252,11 +252,7 @@ void songspilt(void){
   songlist[2].loadinfo(song3);
   songlist[3].loadinfo(song4);
   songlist[4].loadinfo(song5);
- 
-}
 
-void songinfo(void){
- 
   string songname[5] = {"little star", "little bee", "jingle bell", "two tigers", "train fly fast"};
   int songlength[5] = {42, 49, 47, 32, 38};
   int songspeed[5] = {1, 1, 1, 2, 1};
@@ -280,14 +276,14 @@ void songinfo(void){
   songlist[4].name=songname[4];
   songlist[4].length=songlength[4];
   songlist[4].speed=songspeed[4];
- 
+
+}
+
+void loadsonghandler(){
+  queue1.call(loadsong);
 }
 
 void mode_selection(){
- 
-  queue.call(loadsong);
-  queue0.call(songspilt);
-  queue1.call(songinfo);
  
   if(timers.read_ms()>1000){
     queue2.cancel(player);
@@ -556,76 +552,15 @@ int main(int argc, char* argv[]) {
   uLCD.printf("** User Manual **\n\n");
   uLCD.printf(" Press SW2 to\n enter MODE SEL\n and following\n the instructions.\n");
   
-  t.start(callback(&queue, &EventQueue::dispatch_forever));
-  t0.start(callback(&queue0, &EventQueue::dispatch_forever));
   t1.start(callback(&queue1, &EventQueue::dispatch_forever));
   t2.start(callback(&queue2, &EventQueue::dispatch_forever));
   t3.start(callback(&queue3, &EventQueue::dispatch_forever));
   t4.start(callback(&queue4, &EventQueue::dispatch_forever));
   timers.start();
-  button.rise(queue1.event(mode_selection));
-
-  
-
-  /*int song1[84]={261, 261, 392, 392, 440, 440, 392,
-                349, 349, 330, 330, 294, 294, 261,
-                392, 392, 349, 349, 330, 330, 294,
-                392, 392, 349, 349, 330, 330, 294,
-                261, 261, 392, 392, 440, 440, 392,
-                349, 349, 330, 330, 294, 294, 261,
-                1, 1, 1, 1, 1, 1, 2,
-                1, 1, 1, 1, 1, 1, 2,
-                1, 1, 1, 1, 1, 1, 2,
-                1, 1, 1, 1, 1, 1, 2,
-                1, 1, 1, 1, 1, 1, 2,
-                1, 1, 1, 1, 1, 1, 2};*/
-  
-  
-  /*int song2[98]={
-    392,330,330,349,
-    294,294,261,294,330,349,392,392,392,392,330,330,349,
-    294,294,261,330,392,392,330,294,294,294,294,294,330,349,330,
-    330,330,330,330,349,392,392,330,330,349,294,294,261,330,392,392,261,
-    1,1,2,1,1,2,1,1,1,1,1,1,2,
-    1,1,2,1,1,2,1,1,1,1,4,
-    1,1,1,1,1,1,2,1,1,1,1,1,1,2,
-    1,1,2,1,1,2,1,1,1,1,4
-  };*/
-  
-
-  /*int song3[95]={
-    330,330,330,330,330,330,330,392,261,294,
-    330,349,349,349,349,349,330,330,330,294,294,330,294,
-    392,330,330,330,330,330,330,330,392,261,294,330,349,349,349,
-    349,349,330,330,392,392,349,294,261,
-    1,1,2,1,1,2,1,1,1,1,4,
-    1,1,2,1,1,1,1,1,1,1,1,2,2,
-    1,1,2,1,1,2,1,1,1,1,4,
-    1,1,2,1,1,1,1,1,1,1,1,2,2
-  };*/
-  
-
-  /*int song4[64]={
-    261,294,330,261,261,294,330,261,330,349,392,330,349,392,392,440,392,349,330,261,392,440,392,349,330,261,261,196,261,261,196,261,
-    2,2,2,2,2,2,2,2,
-    2,2,4,2,2,4,
-    1,1,1,1,2,2,1,1,1,1,2,2,
-    2,2,4,2,2,4
-  };*/
-  
-
-  /*int song5[76]={
-    392,392,330,261,392,392,330,261,294,330,349,349,330,349,349,392,392,330,392,330,294,330,261,349,294,294,294,330,261,261,261,294,330,349,294,261,247,261,
-    1,1,1,1,1,1,1,1,
-    1,1,1,1,1,1,1,1,
-    1,1,1,1,1,1,2,
-    1,1,1,1,1,1,1,1,
-    1,1,1,1,1,1,2
-  };*/
-  
+  button.rise(queue1.event(loadsonghandler));
+  button.fall(queue1.event(mode_selection));
 
   nextsong=0;
-  // wait(1);
   
   if (model->version() != TFLITE_SCHEMA_VERSION) {
     error_reporter->Report(
@@ -686,6 +621,7 @@ int main(int argc, char* argv[]) {
     
     redled=1;
     greenled=0;
+    blueled=1;
     wait(0.5);
     
   }

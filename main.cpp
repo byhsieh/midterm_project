@@ -14,7 +14,7 @@
 #include "uLCD_4DGL.h"
 
 #define bufferLength (32)
-#define signalLength (417)
+#define signalLength (416)
 
 uLCD_4DGL uLCD(D1, D0, D2);
 DA7212 audio;
@@ -224,7 +224,7 @@ void loadsong(void)
 
 void songspilt(void){
   
-  int song1[84], song2[98], song3[95], song4[64], song5[76];
+  int song1[84], song2[98], song3[94], song4[64], song5[76];
   int j;
   
   for(j=0; j<84; j++){
@@ -235,15 +235,15 @@ void songspilt(void){
      song2[j] = song[j];
   }
  
-  for(j=182; j<277; j++){
+  for(j=182; j<276; j++){
      song3[j] = song[j];
   }
  
-  for(j=277; j<341; j++){
+  for(j=276; j<340; j++){
      song4[j] = song[j];
   }
  
-  for(j=341; j<417; j++){
+  for(j=340; j<416; j++){
      song5[j] = song[j];
   }
  
@@ -382,7 +382,9 @@ void playmusic(int reset){
 
     }
   }
-  
+ 
+  redled=1;
+  greenled=0;
 }
 
 

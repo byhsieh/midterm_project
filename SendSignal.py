@@ -44,15 +44,15 @@ speeds2=1
 ############################## SONG3 INFO ##############################
 name3="jingle bell"
 
-song3=[330,330,330,330,330,330,330,392,261,294
-,330,349,349,349,349,349,330,330,330,294,294,330,294,
-392,330,330,330,330,330,330,330,392,261,294,330,349,349,349
-,349,349,330,330,392,392,349,294,261]
+song3=[330,330,330,330,330,330,330,392,261,294,330,
+       349,349,349,349,349,330,330,330,294,294,330,294,392,
+       330,330,330,330,330,330,330,392,261,294,330,
+       349,349,349,349,349,330,330,392,392,349,294,261]
 
 note3=[1,1,2,1,1,2,1,1,1,1,4,
         1,1,2,1,1,1,1 ,1,1,1,1,2,2,
        1,1,2,1,1,2,1,1,1,1,4,
-        1,1,2,1,1,1,1 ,1,1,1,1,2,2]
+        1,1,2,1,1,1,1 ,1,1,1,2,2]
 
 songlength3=47
 speeds3=1
@@ -101,7 +101,7 @@ serdev = '/dev/ttyACM0'
 s = serial.Serial(serdev)
 
 song = song1 + note1 + song2 + note2 + song3 + note3 + song4 + note4 + song5 + note5
-songlength = 2 * (songlength1 + songlength2 + songlength3 + songlength4 + songlength5) + 1
+songlength = 2 * (songlength1 + songlength2 + songlength3 + songlength4 + songlength5)
 
 print("Start sending songs ...")
 print("It may take about %d seconds ..." % (int(songlength * waitTime)))

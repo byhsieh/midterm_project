@@ -95,17 +95,21 @@ speeds5=1
 ########################################################################
 
 ########################################################################
-formatter = lambda x: "%d" % x
+formatter = lambda x: "%.3f" % x
 
 serdev = '/dev/ttyACM0'
 s = serial.Serial(serdev)
 
-song = song1 + note1 + song2 + note2 + song3 + note3 + song4 + note4 + song5 + note5
+song = song1 + note1 + song2 + note2 + song3 + note3 + song4 + note4 + song5 + note5 
 songlength = 2 * (songlength1 + songlength2 + songlength3 + songlength4 + songlength5)
+
+songs = []
+for num in song:
+       songs.append(num/1000.0)
 
 print("Start sending songs ...")
 print("It may take about %d seconds ..." % (int(songlength * waitTime)))
-for data in song:
+for data in songs:
   s.write(bytes(formatter(data), 'UTF-8'))
   time.sleep(waitTime)
 s.close()

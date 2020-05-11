@@ -6,6 +6,7 @@
 #include "DA7212.h"
 #include <cmath>
 #include <iostream>
+#include <stdio.h>
 
 #include "tensorflow/lite/c/common.h"
 #include "tensorflow/lite/micro/kernels/micro_ops.h"
@@ -72,9 +73,9 @@ int idC;
 int irq=0;
 int resetmusicplay=0;
 int f=1;
-int finish;
+int done=0;
 
-float song[signalLength];
+int song[signalLength];
 char serialInBuffer[bufferLength];
 int serialCount = 0;
 
@@ -211,25 +212,25 @@ void songsplit(){
   int song1[84], song2[98], song3[94], song4[64], song5[76];
   int j;
   
-  while (finish){
+  //while (finish){
     for(j=0; j<84; j++){
-     song1[j] = (int) song[j]*1000.0;
+     song1[j] = song[j];
     }
  
     for(j=84; j<182; j++){
-     song2[j-84] = (int) song[j]*1000.0;
+     song2[j-84] = song[j];
     }
  
     for(j=182; j<276; j++){
-     song3[j-182] = (int) song[j]*1000.0;
+     song3[j-182] = song[j];
     }
  
     for(j=276; j<340; j++){
-     song4[j-276] = (int) song[j]*1000.0;
+     song4[j-276] = song[j];
     }
  
     for(j=340; j<416; j++){
-     song5[j-340] = (int) song[j]*1000.0;
+     song5[j-340] = song[j];
     }
  
     songlist[0].loadinfo(song1);
@@ -237,7 +238,7 @@ void songsplit(){
     songlist[2].loadinfo(song3);
     songlist[3].loadinfo(song4);
     songlist[4].loadinfo(song5);
-  }
+  //}
   
 }
 
@@ -253,32 +254,36 @@ void loadsong()
     {
       serialInBuffer[serialCount] = pc.getc();
       serialCount++;
-      if(serialCount == 5)
+      if(serialCount == 3)
       {
         serialInBuffer[serialCount] = '\0';
-        song[i] = (float) atof(serialInBuffer);
+        song[i] = (int) atof(serialInBuffer);
         serialCount = 0;
         i++;
       }
     }
   }
-  
-  songsplit();
+  done=1;
+  if(done == 1){
+    songsplit();
+    queue0.cancel(loadsong);
+  }   
 }
 
 
 void loadsonghandler(){
   queue0.call(loadsong);
+  mode_selection();
 }
 
 void mode_selection(){
 
-  int onetime = 0;
+  /*int onetime = 0;
 
   while(onetime<1){
     onetime++;
     loadsong(); 
-  }
+  }*/
 
     if(timers.read_ms()>1000){
     queue2.cancel(player);
@@ -551,8 +556,8 @@ int main(int argc, char* argv[]) {
   t3.start(callback(&queue3, &EventQueue::dispatch_forever));
   t4.start(callback(&queue4, &EventQueue::dispatch_forever));
   timers.start();
-  //button.rise(queue1.event(loadsonghandler));
-  button.rise(queue1.event(mode_selection));
+  button.rise(queue0.event(loadsonghandler));
+  //button.rise(queue1.event(mode_selection));
 
   string songname[5] = {"little star", "little bee", "jingle bell", "two tigers", "train fly fast"};
   int songlength[5] = {42, 49, 47, 32, 38};

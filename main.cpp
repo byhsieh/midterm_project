@@ -257,7 +257,7 @@ void loadsong()
       if(serialCount == 3)
       {
         serialInBuffer[serialCount] = '\0';
-        song[i] = (int) atof(serialInBuffer);
+        song[i] = atoi(serialInBuffer);
         serialCount = 0;
         i++;
       }

@@ -18,7 +18,7 @@
 
 
 #define bufferLength (32)
-#define signalLength (416)
+#define signalLength (84)
 
 using namespace std;
 
@@ -31,7 +31,7 @@ DigitalIn confirmbutton(SW3);
 
 DigitalOut redled(LED1); 
 DigitalOut greenled(LED2);
-DigitalOut blueled(LED3);
+//DigitalOut blueled(LED3);
 
 uLCD_4DGL uLCD(D1, D0, D2);
 
@@ -75,7 +75,7 @@ int resetmusicplay=0;
 int f=1;
 int done=0;
 
-int song[signalLength];
+float song[signalLength];
 char serialInBuffer[bufferLength];
 int serialCount = 0;
 
@@ -212,33 +212,33 @@ void songsplit(){
   int song1[84], song2[98], song3[94], song4[64], song5[76];
   int j;
   
-  //while (finish){
-    for(j=0; j<84; j++){
-     song1[j] = song[j];
-    }
+  
+  for(j=0; j<84; j++){
+    song1[j] = (int)(song[j]*1000);
+  }
  
-    for(j=84; j<182; j++){
-     song2[j-84] = song[j];
-    }
+  /*for(j=84; j<182; j++){
+    song2[j-84] = (int)(song[j]*1000);
+  }
  
-    for(j=182; j<276; j++){
-     song3[j-182] = song[j];
-    }
+  for(j=182; j<276; j++){
+    song3[j-182] = (int)(song[j]*1000);
+  }
  
-    for(j=276; j<340; j++){
-     song4[j-276] = song[j];
-    }
+  for(j=276; j<340; j++){
+    song4[j-276] = (int)(song[j]*1000);
+  }
  
-    for(j=340; j<416; j++){
-     song5[j-340] = song[j];
-    }
+  for(j=340; j<416; j++){
+    song5[j-340] = (int)(song[j]*1000);
+  }*/
  
-    songlist[0].loadinfo(song1);
-    songlist[1].loadinfo(song2);
-    songlist[2].loadinfo(song3);
-    songlist[3].loadinfo(song4);
-    songlist[4].loadinfo(song5);
-  //}
+  songlist[0].loadinfo(song1);
+  //songlist[1].loadinfo(song2);
+  //songlist[2].loadinfo(song3);
+  //songlist[3].loadinfo(song4);
+  //songlist[4].loadinfo(song5);
+  
   
 }
 
@@ -254,32 +254,24 @@ void loadsong()
     {
       serialInBuffer[serialCount] = pc.getc();
       serialCount++;
-      if(serialCount == 3)
+      if(serialCount == 5)
       {
         serialInBuffer[serialCount] = '\0';
-        song[i] = atoi(serialInBuffer);
+        song[i] = (float) atof(serialInBuffer);
         serialCount = 0;
         i++;
       }
     }
   }
-  done=1;
-  if(done == 1){
-    songsplit();
-    queue0.cancel(loadsong);
-  }   
+  
+  songsplit();
+  
 }
 
-
-void loadsonghandler(){
-  queue0.call(loadsong);
-  mode_selection();
-}
 
 void mode_selection(){
 
   /*int onetime = 0;
-
   while(onetime<1){
     onetime++;
     loadsong(); 
@@ -330,6 +322,12 @@ void mode_selection(){
   
   f=1;
 }
+
+void loadsonghandler(){
+  queue0.call(loadsong);
+  mode_selection();
+}
+
 
 void playmusic(int reset){
   //int starttaiko;
@@ -556,7 +554,7 @@ int main(int argc, char* argv[]) {
   t3.start(callback(&queue3, &EventQueue::dispatch_forever));
   t4.start(callback(&queue4, &EventQueue::dispatch_forever));
   timers.start();
-  button.rise(queue0.event(loadsonghandler));
+  button.rise(queue1.event(loadsonghandler));
   //button.rise(queue1.event(mode_selection));
 
   string songname[5] = {"little star", "little bee", "jingle bell", "two tigers", "train fly fast"};
@@ -630,11 +628,9 @@ int main(int argc, char* argv[]) {
     
     redled=1;
     greenled=0;
-    blueled=1;
+    //blueled=1;
     wait(0.5);
     
   }
   
 }
-
-

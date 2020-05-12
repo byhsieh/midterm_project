@@ -54,8 +54,8 @@ int player;
 int endplaying=0;
 int nowplaying=0;
 int nextsong;
-int numberofsongs=6;
-int ready_to_load=6;
+int numberofsongs=9;
+int ready_to_load=9;
 int song_select_mode=0;
 int load_or_unload_mode=0;
 int unload_mode=0;
@@ -161,7 +161,7 @@ void songs::unload(){
   //info=NULL;
 }
 
-songs songlist[6];
+songs songlist[9];
 
 void song_list(){
   uLCD.cls();
@@ -531,12 +531,15 @@ int main(int argc, char* argv[]) {
   timers.start();
   button.rise(queue1.event(mode_selection));
 
-  songlist[0].name="little star";
-  songlist[1].name="little bee";
-  songlist[2].name="jingle bell";
-  songlist[3].name="two tigers";
-  songlist[4].name="train fly fast";
-  songlist[5].name="ode to joy";
+  songlist[0].name="Little Star";
+  songlist[1].name="Little Bee";
+  songlist[2].name="Jingle Bell";
+  songlist[3].name="Two Tigers";
+  songlist[4].name="Train Fly";
+  songlist[5].name="Ode to Joy";
+  songlist[6].name="Happy Birthday";
+  songlist[7].name="Snail and Yellowbird";
+  songlist[8].name="Cuckoo";
 
   int song1[84]={261, 261, 392, 392, 440, 440, 392,
                 349, 349, 330, 330, 294, 294, 261,
@@ -633,6 +636,48 @@ int main(int argc, char* argv[]) {
   songlist[5].length=62;
   songlist[5].loadinfo(song6);
   songlist[5].speed=1;
+ 
+  int song7[50]={
+     262,262,294,262,349,330,
+     262,262,294,262,392,349,
+     262,262,523,440,349,330,294,
+     494,494,440,349,392,349,
+     1,1,1,1,1,2,
+     1,1,1,1,1,2,
+     1,1,1,1,1,1,2,
+     1,1,1,1,1,2
+  };
+  songlist[6].length=25;
+  songlist[6].loadinfo(song7);
+  songlist[6].speed=1;
+ 
+  int song8[104]={
+     392,392,392,392,330,392,262,440,392,
+     392,392,392,392,330,294,262,330,294,
+     294,330,392,392,330,330,294,262,262,
+     294,330,262,220,175,220,175,
+     392,392,392,392,330,294,262,440,392,392,440,262,294,262,294,330,294,262,
+     1,1,1,1,1,1,2,2,4,
+     1,1,1,1,1,1,2,2,4,
+     2,2,2,2,2,1,1,2,2,
+     2,2,2,2,2,2,4,
+     1,1,1,1,1,1,2,2,4,1,1,2,2,2,2,4,4,4
+  };
+  songlist[7].length=52;
+  songlist[7].loadinfo(song8);
+  songlist[7].speed=2;
+ 
+  int song9[62]={
+     523,440,0,523,440,0,392,349,392,349,
+     392,392,440,494,392,440,440,494,523,440,
+     523,440,0,523,440,0,494,440,392,349,0,
+     1,1,1,1,1,1,2,2,2,2,
+     2,2,2,4,1,2,2,2,4,1,
+     1,1,1,1,1,1,2,2,2,4,1
+  };
+  songlist[8].length=31;
+  songlist[8].loadinfo(song9);
+  songlist[8].speed=2;
 
   nextsong=0;
   // wait(1);

@@ -203,28 +203,40 @@ void song_list(){
 
 void songsplit(){
 
-  int song1[84], song2[98], song3[94], song4[64], song5[76];
+  int song1[122], song2[52], song3[76], song4[50], song5[124], song6[94], song7[98], song8[84];
   int j;
   
   
-  for(j=0; j<84; j++){
-    song1[j] = (int)(song[j]*1000);
+  for(j=0; j<122; j++){
+    song1[j] = song[j];
   }
  
-  for(j=84; j<182; j++){
-    song2[j-84] = (int)(song[j]*1000);
+  for(j=122; j<174; j++){
+    song2[j-122] = song[j];
   }
  
-  for(j=182; j<276; j++){
-    song3[j-182] = (int)(song[j]*1000);
+  for(j=174; j<250; j++){
+    song3[j-174] = song[j];
   }
  
-  for(j=276; j<340; j++){
-    song4[j-276] = (int)(song[j]*1000);
+  for(j=250; j<300; j++){
+    song4[j-250] = song[j];
   }
  
-  for(j=340; j<416; j++){
-    song5[j-340] = (int)(song[j]*1000);
+  for(j=300; j<424; j++){
+    song5[j-300] = song[j];
+  }
+ 
+  for(j=424; j<518; j++){
+    song6[j-424] = song[j];
+  }
+ 
+  for(j=518; j<616; j++){
+    song7[j-518] = song[j];
+  }
+ 
+  for(j=616; j<700; j++){
+    song8[j-616] = song[j];
   }
  
   songlist[0].loadinfo(song1);
@@ -232,8 +244,9 @@ void songsplit(){
   songlist[2].loadinfo(song3);
   songlist[3].loadinfo(song4);
   songlist[4].loadinfo(song5);
-  
-  
+  songlist[5].loadinfo(song6);
+  songlist[6].loadinfo(song7);
+  songlist[7].loadinfo(song8);
 }
 
 void loadsong()
